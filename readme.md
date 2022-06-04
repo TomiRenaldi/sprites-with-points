@@ -1,4 +1,4 @@
-# Three.js - Template - Simple
+# Sprites with Points
 
 ## Setup
 Download [Node.js](https://nodejs.org/en/download/).
