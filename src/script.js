@@ -6,9 +6,6 @@ import GUI from 'lil-gui'
 /**
  * Base
  */
-const mouseX = 0
-const mouseY = 0
-
 const materials = []
 
 // Canvas
@@ -47,21 +44,26 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 2000)
 camera.position.x = 1
 camera.position.y = 1
-camera.position.z = 100
+camera.position.z = 1000
 scene.add(camera)
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
+controls.enabled = false
 controls.enableDamping = true
 
 /**
  * Sprites
  */
 const sprites = {}
-sprites.count = 10000
+sprites.count = 2000
+
+sprites.mouses = {}
+sprites.mouses.moveX = 0
+sprites.mouses.moveY = 0
 
 sprites.geometry = new THREE.BufferGeometry()
 sprites.geometry.vertices = []
@@ -98,15 +100,23 @@ for (let i = 0; i < parameters.length; i++)
     const sprite = parameters[i][1]
     const size = parameters[i][2]
 
-    materials[i] = new THREE.PointsMaterial({ size: size, map: sprite, blending: THREE.AdditiveBlending, depthTest: false, transparent: true })
-    materials[i].color.setHSL(color[0], color[1] , color[2] )
+    materials[i] = new THREE.PointsMaterial({ 
+        size: size, 
+        map: sprite, 
+        blending: THREE.AdditiveBlending, 
+        depthTest: false, 
+        transparent: true })
+
+    materials[i].color.setHSL(
+        color[0], 
+        color[1], 
+        color[2])
 
     const particles = new THREE.Points(sprites.geometry, materials[i])
 
     particles.rotation.x = Math.random() * 6
     particles.rotation.y = Math.random() * 6
     particles.rotation.z = Math.random() * 6
-
     scene.add(particles)
 }
 
@@ -118,8 +128,15 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true,
 })
 
+renderer.setClearColor('#d9d9d9', 1)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+window.addEventListener('pointermove', (_event) => {
+    if(_event.isPrimary === false) return
+    sprites.mouses.moveX = _event.clientX - sizes.width
+    sprites.mouses.moveY = _event.clientY - sizes.height
+})
 
 const params = {
 	texture: true
@@ -134,8 +151,6 @@ gui.add( params, 'texture' ).onChange((value) =>
 	}
 })
 
-gui.open()
-
 /**
  * Animate
  */
@@ -149,11 +164,14 @@ const tick = () =>
     lastElapsedTime = elapsedTime
 
     // Update controls
-    controls.update()
+    if(controls.enabled)
+    {
+        controls.update()
+    }
 
     // Render
-    camera.position.x += (mouseX - camera.position.x) * 0.5
-    camera.position.y += (- mouseX - camera.position.y) * 0.5
+    camera.position.y += (sprites.mouses.moveY - camera.position.y) * 0.01
+    camera.position.x += (sprites.mouses.moveX - camera.position.x) * 0.01
 
     camera.lookAt(scene.position)
 
